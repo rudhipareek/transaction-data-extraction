@@ -132,7 +132,7 @@ def process_image(image_path):
     print("Transaction processed and stored in the database.")
 
 # Define the image path (Ensure the path to your image is correct)
-image_path = r"C:\Users\RUDHI PAREEK\OneDrive\Desktop\SIH\Ajeenkya.png"
+image_path = r"C:\Users\RUDHI PAREEK\OneDrive\Desktop\SIH\Img_1_Ajeenkya.png"
 
 # Call the process_image function with the image path
 process_image(image_path)
