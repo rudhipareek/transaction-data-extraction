@@ -15,6 +15,26 @@ pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tessera
 conn = sqlite3.connect("student_fee_database.db", check_same_thread=False)
 cursor = conn.cursor()
 
+# Drop the table if it exists
+cursor.execute("DROP TABLE IF EXISTS transactions;")
+conn.commit()
+
+# Create the table again with the correct columns
+cursor.execute("""
+    CREATE TABLE transactions (
+        id INTEGER PRIMARY KEY,
+        transaction_date TEXT,
+        transaction_time TEXT,
+        transaction_amount REAL,
+        upi_transaction_id TEXT,
+        google_transaction_id TEXT,
+        recipient TEXT,
+        sender TEXT,
+        payment_status TEXT
+    );
+""")
+conn.commit()
+
 @app.route('/process-image', methods=['POST'])
 def process_image():
     if 'file' not in request.files:
@@ -50,7 +70,7 @@ def process_image():
 
             # Define regular expressions for extracting transaction data
             pattern_date_time = r"(\d{1,2} [A-Za-z]{3} \d{4}), (\d{1,2}:\d{2} [apm]{2})"
-            pattern_amount = r"₹(\d{1,3}(?:,\d{3})*)"
+            pattern_amount = r"₹?\s?(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)"
             pattern_upi_transaction_id = r"UPI transaction ID\s+(\d+)"
             pattern_google_transaction_id = r"Google transaction ID\s+(\w+)"
             pattern_recipient = r"To: (.+)"
@@ -86,6 +106,16 @@ def process_image():
             # Handle missing or incomplete data
             if upi_transaction_id is None or google_transaction_id is None:
                 return jsonify({'error': 'Incomplete transaction data'}), 400
+
+            # Check if the transaction already exists
+            cursor.execute("""
+                SELECT COUNT(*) FROM transactions 
+                WHERE upi_transaction_id = ? OR google_transaction_id = ?;
+            """, (upi_transaction_id, google_transaction_id))
+            exists = cursor.fetchone()[0]
+
+            if exists:
+                return jsonify({'message': 'Transaction already exists.'}), 200
 
             # Store the extracted data in the database
             cursor.execute("""
