@@ -3,7 +3,7 @@ from PIL import Image
 import numpy as np
 import cv2
 import io
-from ABC import process_image,get_all_transactions  # Ensure this import points to the correct function
+from Main import process_image,get_all_transactions  # Ensure this import points to the correct function
 
 # Create a Streamlit app
 st.title("AI-powered Invoice & Transaction Data Extraction")
